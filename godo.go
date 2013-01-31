@@ -1,13 +1,35 @@
 package main
 
 import (
+	"errors"
+	"flag"
 	"fmt"
-	//	"os"
-	"bytes"
-	"encoding/gob"
+	"os"
+	"path/filepath"
+
 	"github.com/tracyde/godo/collection"
-	"io/ioutil"
 )
+
+var noAct = errors.New("no action")
+
+var (
+	file = flag.String("file", defaultFile(".godo", "GODO"), "file to store projects and tasks")
+)
+
+func defaultFile(name, env string) string {
+	if f := os.Getenv(env); f != "" {
+		return f
+	}
+	return filepath.Join(os.Getenv("HOME"), name)
+}
+
+const usage = `Usage:
+	godo
+		Show top project and tasks
+	godo ls
+		Show all tasks
+Flags:
+`
 
 func TestLoad(c *collection.Collection) {
 	c.AddProject("Test0", "This is a test Project0", 2)
@@ -30,32 +52,52 @@ func TestLoad(c *collection.Collection) {
 }
 
 func main() {
-	c := collection.New("/tmp/test.gob")
-	TestLoad(c)
-	c.Print()
+	flag.Usage = func() {
+		fmt.Fprint(os.Stderr, usage)
+		flag.PrintDefaults()
+	}
+	flag.Parse()
 
-	fmt.Println("Saving collection to gobfile")
-	b := new(bytes.Buffer)
-	enc := gob.NewEncoder(b)
-	enc.Encode(c)
-	err := ioutil.WriteFile(c.Filename, b.Bytes(), 0600)
-	if err != nil {
-		panic(err)
-	}
-	fmt.Printf("just saved gob with %v\n", c)
+	c := collection.New(*file)
+	a, n := flag.Arg(0), len(flag.Args())
 
-	n, err := ioutil.ReadFile(c.Filename)
-	if err != nil {
-		panic(err)
+	err := noAct
+	switch {
+	case a == "ls" && n == 1:
+		// list all tasks
+		err = c.Read()
+		c.Print()
+	case n == 0:
+		// no arguments; no action
+		fmt.Println("No action taken")
 	}
-	p := bytes.NewBuffer(n)
-	dec := gob.NewDecoder(p)
-	e := collection.New("/tmp/test.gob")
-	err = dec.Decode(&e)
-	if err != nil {
-		panic(err)
+	if err == noAct {
+		// no action taken
 	}
-	fmt.Printf("just read gob from file and it's showing: %v\n", e)
-	e.Print()
+	if err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		os.Exit(1)
+	}
+
+	/*
+		TestLoad(c)
+		c.Print()
+
+		fmt.Println("Saving collection to gobfile")
+		err := c.Save()
+		if err != nil {
+			panic(err)
+		}
+		fmt.Printf("just saved gob with %v\n", c)
+
+		c2 := collection.New("/tmp/test.gob")
+		err = c2.Read()
+		if err != nil {
+			panic(err)
+		}
+		fmt.Printf("just read gob from file and it's showing: %v\n", c2)
+		c2.Print()
+	*/
+
 	// fmt.Printf("Type: %T  ::  Value: %v\n", c, c)
 }

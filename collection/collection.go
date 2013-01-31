@@ -2,8 +2,12 @@
 package collection
 
 import (
+	"bytes"
+	"encoding/gob"
 	"errors"
 	"fmt"
+	"io/ioutil"
+	"log"
 	"sort"
 )
 
@@ -104,4 +108,35 @@ func (c *Collection) Print() {
 		}
 		fmt.Println()
 	}
+}
+
+func (c *Collection) Save() (err error) {
+	b := new(bytes.Buffer)
+	enc := gob.NewEncoder(b)
+	enc.Encode(c.Projects)
+	err = ioutil.WriteFile(c.Filename, b.Bytes(), 0600)
+	if err != nil {
+		log.Fatal(err)
+	}
+	return err
+}
+
+func (c *Collection) Read() (err error) {
+	b, err := ioutil.ReadFile(c.Filename)
+	if err != nil {
+		log.Fatal(err)
+		return err
+	}
+
+	buf := bytes.NewBuffer(b)
+	dec := gob.NewDecoder(buf)
+	var p Projects
+	fmt.Printf("project :: %T\n", p)
+	err = dec.Decode(&p)
+	if err != nil {
+		log.Fatal(err)
+		return err
+	}
+	c.Projects = p
+	return err
 }
