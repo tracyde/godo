@@ -9,11 +9,14 @@ import (
 	"io/ioutil"
 	"log"
 	"sort"
+	"time"
 )
 
 type Task struct {
 	Description string
 	Priority    int
+	Entered     time.Time
+	Completed   time.Time
 }
 
 type Tasks []*Task // Wrapper type to allow sorting
@@ -92,7 +95,7 @@ func (c *Collection) AddTask(pn, d string, p int) error {
 	//fmt.Printf("AddTask-> sort.Search found index: %d\n", i)
 	if i < len(c.Projects) && c.Projects[i].Name == pn {
 		//fmt.Printf("AddTask-> Adding new Task to project: %s\n", c.Projects[i].Name)
-		c.Projects[i].Tasks = append(c.Projects[i].Tasks, &Task{d, p})
+		c.Projects[i].Tasks = append(c.Projects[i].Tasks, &Task{d, p, time.Now(), time.Time{}})
 	} else {
 		return errors.New("project name does not exist")
 	}
@@ -140,3 +143,4 @@ func (c *Collection) Read() (err error) {
 	c.Projects = p
 	return err
 }
+

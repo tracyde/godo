@@ -63,6 +63,10 @@ func main() {
 
 	err := noAct
 	switch {
+	case a == "test" && n == 1:
+		// load test tasks
+		TestLoad(c)
+		c.Save()
 	case a == "ls" && n == 1:
 		// list all tasks
 		err = c.Read()
@@ -78,26 +82,4 @@ func main() {
 		fmt.Fprintln(os.Stderr, err)
 		os.Exit(1)
 	}
-
-	/*
-		TestLoad(c)
-		c.Print()
-
-		fmt.Println("Saving collection to gobfile")
-		err := c.Save()
-		if err != nil {
-			panic(err)
-		}
-		fmt.Printf("just saved gob with %v\n", c)
-
-		c2 := collection.New("/tmp/test.gob")
-		err = c2.Read()
-		if err != nil {
-			panic(err)
-		}
-		fmt.Printf("just read gob from file and it's showing: %v\n", c2)
-		c2.Print()
-	*/
-
-	// fmt.Printf("Type: %T  ::  Value: %v\n", c, c)
 }
